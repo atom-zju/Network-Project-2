@@ -32,9 +32,17 @@ void FwdTable::set_router_id(unsigned short router_id)
   @*/
 void FwdTable::check_DV()
 {
+    queue<int> clear_vec;
     for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
-        if((*it).second.time_stamp>MAX_DV_TIMESTAMP)
-            fwd_table.erase((*it).first);
+        if((*it).second.time_stamp>MAX_DV_TIMESTAMP){
+            //fwd_table.erase((*it).first);
+            clear_vec.push((*it).first);
+        }
+    }
+    while(!clear_vec.empty()){
+        int entry_num=clear_vec.front();
+        fwd_table.erase(entry_num);
+        clear_vec.pop();
     }
 }
 
