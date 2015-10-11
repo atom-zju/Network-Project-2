@@ -1,12 +1,35 @@
 #include "porttable.h"
+#include <netinet/in.h>
+#include <string.h>
 
-PortTable::PortTable(unsigned short num_ports, unsigned short router_id):num_ports(num_ports),id(router_id)
+//borrowed from event.cc
+//const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
+
+
+PortTable::PortTable()
 {
+
+}
+
+/*@
+  @ check and remove outdated entries
+  @*/
+void PortTable::set_num_ports(unsigned short ports)
+{
+    num_ports=ports;
     port_table=(PortEntry*)malloc(sizeof(PortEntry)*num_ports);
     for(int i=0;i<num_ports;i++){
         //at first, all the port is invalid
         port_table[i].time_stamp=-1;
     }
+}
+
+/*@
+  @ check and remove outdated entries
+  @*/
+void PortTable::set_router_id(unsigned short router_id)
+{
+    id=router_id;
 }
 
 PortTable::~PortTable()
@@ -115,15 +138,17 @@ bool PortTable::analysis_pong(unsigned short port, void *packet, unsigned int gl
 {
     unsigned short t;
     t = *((unsigned char *)packet);
-    if(strcmp(sPacketType[t],"PONG")){
+    if(t!=2){
+    //if(strcmp(sPacketType[t],"PONG")){
+        //const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
         // packet is not "pong" type
         std::cout<<"Err: received packet is not 'pong' type."<<std::endl;
-        free(packet);
+        //free(packet);
         return false;
     }
     if(port>num_ports-1){
         std::cout<<"Err: port # exceeds in analysis_pong()"<<std::endl;
-        free(packet);
+        //free(packet);
         return false;
     }
     fromID=(unsigned short) ntohs(*((unsigned short*)packet+2));
@@ -134,10 +159,10 @@ bool PortTable::analysis_pong(unsigned short port, void *packet, unsigned int gl
         port_table[port].routerID=fromID;
         port_table[port].delay=dly;
         port_table[port].time_stamp=0;
-        free(packet);
+        //free(packet);
         return true;
     }
-    free(packet);
+    //free(packet);
     return false;
 }
 
@@ -164,6 +189,16 @@ unsigned short PortTable::size()
     return num_ports;
 }
 
+/*@
+  @ get delay by port #, return whether succeeded
+  @*/
+bool PortTable::get_delay(unsigned short port, unsigned int &dly)
+{
+    if(port_table[port].time_stamp<0)
+        return false;
+    dly=port_table[port].delay;
+    return true;
+}
 
 
 

@@ -5,8 +5,7 @@
 
 #define MAX_PORT_TIMESTAMP 15
 
-//borrowed from event.cc
-const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
+
 
 
 struct PortEntry{
@@ -21,8 +20,10 @@ struct PortEntry{
 class PortTable
 {
 public:
-    PortTable(unsigned short num_ports, unsigned short router_id);
+    PortTable();
     ~PortTable();   //free the port_table pointer
+    void set_num_ports(unsigned short ports);
+    void set_router_id(unsigned short router_id);
     void check();   //check and remove all the outdated entries
     void inc_tstamp();  //increase the timestamp by 1
     void* analysis_ping(unsigned short port, void *packet, unsigned short size);
@@ -32,6 +33,7 @@ public:
     bool ID2port(unsigned short ID, unsigned short &port);  //given ID, try to retrieve port, return whether succeed
     void* make_pkt_ping(unsigned int global_time,unsigned short& pktsize);      //make ping pkt
     unsigned short size();      //return the size of table
+    bool get_delay(unsigned short port, unsigned int& dly); //get port delay by port #, return whetehr succeeded
 
 private:
     unsigned short num_ports;

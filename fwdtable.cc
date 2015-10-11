@@ -1,8 +1,30 @@
 #include "fwdtable.h"
+#include <netinet/in.h>
+#include <string.h>
+#include <limits.h>
 
-FwdTable::FwdTable(unsigned short id,eProtocolType ptcl): id(id), ptcl(ptcl)
+//borrowed from event.cc
+//const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
+
+FwdTable::FwdTable()
 {
 
+}
+
+/*@
+  @ set protocol
+  @*/
+void FwdTable::set_protocol(eProtocolType protocol)
+{
+    ptcl=protocol;
+}
+
+/*@
+  @ set router id
+  @*/
+void FwdTable::set_router_id(unsigned short router_id)
+{
+    id=router_id;
 }
 
 /*@
@@ -34,16 +56,18 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
     unsigned short t;
     bool changed=false;
     t = *((unsigned char *)packet);
-    if(strcmp(sPacketType[t],"DV")){
+    if(t!=3){
+    //const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
+    //if(strcmp(sPacketType[t],"DV")){
         // packet is not "DV" type
         std::cout<<"Err: received packet is not 'DV' type."<<std::endl;
-        free(packet);
+        //free(packet);
         return false;
     }
-    if(size<64){
+    if(size<8){
         // size is small than minimal size
         std::cout<<"Err: received 'DV' packet is too small."<<std::endl;
-        free(packet);
+        //free(packet);
         return false;
     }
 
@@ -86,7 +110,7 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
             }
         }
     }
-    free(packet);
+    //free(packet);
     return changed;
 }
 
@@ -129,14 +153,14 @@ void* FwdTable::make_pkt_DV(unsigned short toID, unsigned short& pktsize)
 /*@
   @ retrieve the entry corresponding to certain dest router
   @*/
-FwdEntry FwdTable::retrieve(unsigned short destID)
-{
-    if(fwd_table.find(destID) == fwd_table.end()){
-        //entry not found
-        return NULL;
-    }
-    return fwd_table[destID];
-}
+//FwdEntry FwdTable::retrieve(unsigned short destID)
+//{
+//    if(fwd_table.find(destID) == fwd_table.end()){
+//        //entry not found
+//        return NULL;
+//    }
+//    return fwd_table[destID];
+//}
 
 
 /*@
