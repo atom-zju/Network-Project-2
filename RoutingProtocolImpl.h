@@ -2,6 +2,10 @@
 #define ROUTINGPROTOCOLIMPL_H
 
 #include "RoutingProtocol.h"
+#include "fwdtable.h"
+#include "porttable.h"
+
+enum AlarmType{periodic_DV,periodic_PING,one_sec_check};
 
 class RoutingProtocolImpl : public RoutingProtocol {
   public:
@@ -37,6 +41,10 @@ class RoutingProtocolImpl : public RoutingProtocol {
 
  private:
     Node *sys; // To store Node object; used to access GSR9999 interfaces 
+    unsigned short id;
+    eProtocolType ptcl;
+    FwdTable fwdtable;
+    PortTable porttable;
 };
 
 #endif
