@@ -28,10 +28,11 @@ void FwdTable::set_router_id(unsigned short router_id)
 }
 
 /*@
-  @ check and remove all the outdated entries
+  @ check and remove all the outdated entries, return whether changed
   @*/
-void FwdTable::check_DV()
+bool FwdTable::check_DV()
 {
+    bool changed=false;
     queue<int> clear_vec;
     for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
         if((*it).second.time_stamp>MAX_DV_TIMESTAMP){
@@ -43,7 +44,9 @@ void FwdTable::check_DV()
         int entry_num=clear_vec.front();
         fwd_table.erase(entry_num);
         clear_vec.pop();
+        //changed=true;
     }
+    return changed;
 }
 
 /*@
@@ -93,7 +96,11 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
             //if the entry is about how to reach the node itself, ignore
             continue;
         }
-        unsigned int cst=(unsigned short) ntohs(*((unsigned short*)packet+5+2*i));
+        unsigned short cst=(unsigned short) ntohs(*((unsigned short*)packet+5+2*i));
+        if(cst==USHRT_MAX){
+            //poison reverse info, ignore
+            continue;
+        }
 
         if(fwd_table.find(desID) == fwd_table.end()){
         //do not have path to desID previously, insert a new entry
@@ -177,6 +184,23 @@ void* FwdTable::make_pkt_DV(unsigned short toID, unsigned short& pktsize)
 bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int usedcst, unsigned short nextHop)
 {
     bool changed=false;
+    if(cst==USHRT_MAX){
+        //if cst == USHRT_MAX, remove all the entry related with destID
+        queue<int> clear_vec;
+        for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+            if((*it).second.via_hop==desID){
+                    clear_vec.push((*it).first);
+            }
+        }
+        while(!clear_vec.empty()){
+            unsigned short rmID=clear_vec.front();
+            fwd_table.erase(rmID);
+            clear_vec.pop();
+            //changed=true;
+        }
+        return changed;
+    }
+    //if it is just a normal update
     if(fwd_table.find(desID) == fwd_table.end()){
         //entry not found, insert entry
         fwd_table[desID].cost=cst;

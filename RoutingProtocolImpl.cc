@@ -1,6 +1,8 @@
 #include "RoutingProtocolImpl.h"
 #include "Node.h"
 #include <string.h>
+#include <limits.h>
+
 
 //borrowed from event.cc
 //const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
@@ -74,16 +76,41 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
     case one_sec_check:
     {
         sys->set_alarm(this,1*1000,data);
-        //check port table
-        porttable.inc_tstamp();
-        porttable.check();
+        queue<unsigned short> change_list;
+        bool changed=false;     //indicate whether fwdtable has changed
         //check forward table
         if(ptcl==P_DV){
             fwdtable.inc_tstamp_DV();
-            fwdtable.check_DV();
+            if(fwdtable.check_DV()){
+                //if fwdtable changed
+                changed=true;
+            }
         }
         else{
-            //check LS
+            //check P_LS
+        }
+        //check port table
+        porttable.inc_tstamp();
+        if(porttable.check(change_list)){
+            //if there is something changed in the porttable
+            while(!change_list.empty()){
+                unsigned short outdatedID=change_list.front();
+                if(fwdtable.try_update(outdatedID,USHRT_MAX,0,outdatedID)){
+                    changed=true;
+                }
+                change_list.pop();
+            }
+        }
+        if(changed){
+            //if fwdtable changed, send newest table
+            unsigned short pktsize,ID;
+            char* pkt;
+            for(int i=0;i<porttable.size();i++){
+                if(!porttable.port2ID(i,ID))
+                    continue;
+                pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
+                sys->send(i,pkt,pktsize);
+            }
         }
         break;
     }

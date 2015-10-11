@@ -25,7 +25,7 @@ public:
     FwdTable();
     void set_router_id(unsigned short router_id);
     void set_protocol(eProtocolType protocol);
-    void check_DV();       //check on 1 sec period, remove the outdated entry (timestamp larger than 15)
+    bool check_DV();       //check on 1 sec period, remove the outdated entry (timestamp larger than 15), return whether changed
     void inc_tstamp_DV();  //increase timestamps of all valid entries by 1
     bool analysis_DV(void *packet, unsigned short size, unsigned int delay);  //analyse DV packet if do any update, return true, else return false
     bool analysis_LS(unsigned short fromID, void *packet, unsigned short size);  //analyse LS packet

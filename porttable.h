@@ -24,7 +24,7 @@ public:
     ~PortTable();   //free the port_table pointer
     void set_num_ports(unsigned short ports);
     void set_router_id(unsigned short router_id);
-    void check();   //check and remove all the outdated entries
+    bool check(queue<unsigned short>& change_list);   //check and remove all the outdated entries
     void inc_tstamp();  //increase the timestamp by 1
     void* analysis_ping(unsigned short port, void *packet, unsigned short size);
     bool analysis_pong(unsigned short port, void *packet, unsigned int global_time,unsigned short& fromID, unsigned int &dly);

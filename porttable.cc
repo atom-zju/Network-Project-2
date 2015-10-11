@@ -38,16 +38,21 @@ PortTable::~PortTable()
 }
 
 /*@
-  @ check and remove outdated entries
+  @ check and remove outdated entries, return whether changed and the changed list
   @*/
-void PortTable::check()
+bool PortTable::check(queue<unsigned short> &change_list)
 {
+    bool changed=false;
     for(int i=0;i<num_ports;i++){
         if(port_table[i].time_stamp<0)
             continue;
-        if(port_table[i].time_stamp>MAX_PORT_TIMESTAMP)
+        if(port_table[i].time_stamp>MAX_PORT_TIMESTAMP){
+            change_list.push(port_table[i].routerID);
             port_table[i].time_stamp=-1;
+            changed=true;
+        }
     }
+    return changed;
 }
 
 /*@
