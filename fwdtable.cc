@@ -34,14 +34,17 @@ bool FwdTable::check_DV()
 {
     bool changed=false;
     queue<int> clear_vec;
-    for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
-        if((*it).second.time_stamp>MAX_DV_TIMESTAMP){
-            //fwd_table.erase((*it).first);
-            clear_vec.push((*it).first);
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if(!(*it).second.empty()){
+            if((*it).second.at(0).time_stamp>MAX_DV_TIMESTAMP){
+                //fwd_table.erase((*it).first);
+                clear_vec.push((*it).first);
+            }
         }
     }
     while(!clear_vec.empty()){
         int entry_num=clear_vec.front();
+        fwd_table[entry_num].clear();
         fwd_table.erase(entry_num);
         clear_vec.pop();
         //changed=true;
@@ -54,8 +57,9 @@ bool FwdTable::check_DV()
   @*/
 void FwdTable::inc_tstamp_DV()
 {
-    for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
-            (*it).second.time_stamp++;
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if(!(*it).second.empty())
+            (*it).second.at(0).time_stamp++;
     }
 }
 
@@ -104,20 +108,29 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
 
         if(fwd_table.find(desID) == fwd_table.end()){
         //do not have path to desID previously, insert a new entry
-            fwd_table[desID].cost=delay+cst;
-            fwd_table[desID].destID=desID;
-            fwd_table[desID].time_stamp=0;
-            fwd_table[desID].via_hop=nextHop;
+            if(fwd_table[desID].empty())
+                fwd_table[desID].push_back(FwdEntry());
+            fwd_table[desID].at(0).cost=delay+cst;
+            fwd_table[desID].at(0).destID=desID;
+            fwd_table[desID].at(0).time_stamp=0;
+            fwd_table[desID].at(0).via_hop=nextHop;
             changed=true;
         }
         //else case, there is an entry to desID
         else{
-            if(delay+cst<fwd_table[desID].cost){
+            if(fwd_table[desID].empty()){
+                fwd_table[desID].push_back(FwdEntry());
+                fwd_table[desID].at(0).cost=delay+cst;
+                fwd_table[desID].at(0).destID=desID;
+                fwd_table[desID].at(0).time_stamp=0;
+                fwd_table[desID].at(0).via_hop=nextHop;
+            }
+            else if(delay+cst<fwd_table[desID].at(0).cost){
                 //new path is shorter than the previous one, change entry
-                fwd_table[desID].cost=delay+cst;
-                fwd_table[desID].destID=desID;
-                fwd_table[desID].time_stamp=0;
-                fwd_table[desID].via_hop=nextHop;
+                fwd_table[desID].at(0).cost=delay+cst;
+                fwd_table[desID].at(0).destID=desID;
+                fwd_table[desID].at(0).time_stamp=0;
+                fwd_table[desID].at(0).via_hop=nextHop;
                 changed=true;
             }
             else{
@@ -149,13 +162,15 @@ void* FwdTable::make_pkt_DV(unsigned short toID, unsigned short& pktsize)
     *((unsigned short *)packet+3)=(unsigned short) htons((unsigned short)toID);
     //write node - cost pair
     int i=0;
-    for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++,i+=2){
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++,i+=2){
+        if((*it).second.empty())
+            continue;
         //wirte node id
-        *((unsigned short *)packet+4+i)=(unsigned short) htons((unsigned short)(*it).second.destID);
+        *((unsigned short *)packet+4+i)=(unsigned short) htons((unsigned short)(*it).second.at(0).destID);
         //write cost
-        if((*it).second.via_hop!=toID){
+        if((*it).second.at(0).via_hop!=toID){
             //if via hop is not dest router, write cost
-            *((unsigned short *)packet+5+i)=(unsigned short) htons((unsigned short)(*it).second.cost);
+            *((unsigned short *)packet+5+i)=(unsigned short) htons((unsigned short)(*it).second.at(0).cost);
         }
         else{
             //if via hop is dest router, poison reverse
@@ -187,13 +202,16 @@ bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int us
     if(cst==USHRT_MAX){
         //if cst == USHRT_MAX, remove all the entry related with destID
         queue<int> clear_vec;
-        for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
-            if((*it).second.via_hop==desID){
+        for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+            if((*it).second.empty())
+                continue;
+            if((*it).second.at(0).via_hop==desID){
                     clear_vec.push((*it).first);
             }
         }
         while(!clear_vec.empty()){
             unsigned short rmID=clear_vec.front();
+            fwd_table[rmID].clear();
             fwd_table.erase(rmID);
             clear_vec.pop();
             //changed=true;
@@ -203,19 +221,29 @@ bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int us
     //if it is just a normal update
     if(fwd_table.find(desID) == fwd_table.end()){
         //entry not found, insert entry
-        fwd_table[desID].cost=cst;
-        fwd_table[desID].destID=desID;
-        fwd_table[desID].time_stamp=0;
-        fwd_table[desID].via_hop=nextHop;
+        if(fwd_table[desID].empty())
+            fwd_table[desID].push_back(FwdEntry());
+        fwd_table[desID].at(0).cost=cst;
+        fwd_table[desID].at(0).destID=desID;
+        fwd_table[desID].at(0).time_stamp=0;
+        fwd_table[desID].at(0).via_hop=nextHop;
         changed=true;
     }
-    else if(fwd_table[desID].via_hop!=nextHop){
-        if(cst<fwd_table[desID].cost){
+    else if(fwd_table[desID].empty()){
+        fwd_table[desID].push_back(FwdEntry());
+        fwd_table[desID].at(0).cost=cst;
+        fwd_table[desID].at(0).destID=desID;
+        fwd_table[desID].at(0).time_stamp=0;
+        fwd_table[desID].at(0).via_hop=nextHop;
+        changed=true;
+    }
+    else if(fwd_table[desID].at(0).via_hop!=nextHop){
+        if(cst<fwd_table[desID].at(0).cost){
             //find a shorter path, change path
-            fwd_table[desID].cost=cst;
-            fwd_table[desID].destID=desID;
-            fwd_table[desID].time_stamp=0;
-            fwd_table[desID].via_hop=nextHop;
+            fwd_table[desID].at(0).cost=cst;
+            fwd_table[desID].at(0).destID=desID;
+            fwd_table[desID].at(0).time_stamp=0;
+            fwd_table[desID].at(0).via_hop=nextHop;
             changed=true;
         }
         else{
@@ -224,10 +252,12 @@ bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int us
         }
     }
         //refresh all entries whose via_hop == nextHop
-    for(hash_map<int, FwdEntry>::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
-        if((*it).second.via_hop==nextHop && (*it).second.destID!=nextHop){
-            (*it).second.cost=(*it).second.cost+cst-usedcst;
-            (*it).second.time_stamp=0;
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if((*it).second.empty())
+            continue;
+        if((*it).second.at(0).via_hop==nextHop && (*it).second.at(0).destID!=nextHop){
+            (*it).second.at(0).cost=(*it).second.at(0).cost+cst-usedcst;
+            (*it).second.at(0).time_stamp=0;
             if(cst!=usedcst)
                 changed=true;
         }
@@ -253,7 +283,9 @@ bool FwdTable::analysis_data(void *packet, unsigned short size, unsigned short& 
         return false;
     }
     else{
-        nextID=fwd_table[dest].via_hop;
+        if(fwd_table[dest].empty())
+            return false;
+        nextID=fwd_table[dest].at(0).via_hop;
         return true;
     }
 }

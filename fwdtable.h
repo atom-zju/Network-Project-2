@@ -36,7 +36,7 @@ public:
     bool analysis_data(void *packet, unsigned short size, unsigned short &nextID);
 private:
     eProtocolType ptcl;
-    hash_map<int, FwdEntry> fwd_table;
+    hash_map<int, vector<FwdEntry> > fwd_table;
     unsigned short id;
 };
 
