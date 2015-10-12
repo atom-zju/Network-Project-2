@@ -34,7 +34,7 @@ public:
     //FwdEntry retrieve(unsigned short destID);       //retrieve the entry corresponding to certain dest router
     bool try_update(unsigned short desID, unsigned int cst, unsigned int usedcst, unsigned short nextHop);     //try to update one entry, used when pong received
     bool analysis_data(void *packet, unsigned short size, unsigned short &nextID);
-    int size(){return fwd_table.size();}
+    int size();//return the size of the hashmap
 private:
     eProtocolType ptcl;
     hash_map<int, vector<FwdEntry> > fwd_table;

@@ -289,3 +289,11 @@ bool FwdTable::analysis_data(void *packet, unsigned short size, unsigned short& 
         return true;
     }
 }
+
+/*@
+  @ return the size of the hash table
+  @*/
+int FwdTable::size()
+{
+    return fwd_table.size();
+}
