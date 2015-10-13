@@ -157,7 +157,7 @@ bool PortTable::analysis_pong(unsigned short port, void *packet, unsigned int gl
         return false;
     }
     fromID=(unsigned short) ntohs(*((unsigned short*)packet+2));
-    dly=(unsigned short) ntohs(*((unsigned short*)packet+4));
+    dly=(unsigned int) ntohl(*((unsigned int*)packet+2));
     dly=global_time-dly;
     if(port_table[port].time_stamp<0||port_table[port].delay!=dly){
         port_table[port].portNo=port;

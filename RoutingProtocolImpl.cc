@@ -187,7 +187,7 @@ void RoutingProtocolImpl::recv(unsigned short port, void *packet, unsigned short
             //find next router id
             if(nextID==id){
                 //reached destination
-                std::cout<<"received DATA"<<std::endl;
+                //std::cout<<"received DATA"<<std::endl;
                 free(packet);
             }
             else if(porttable.ID2port(nextID,nextPort)){

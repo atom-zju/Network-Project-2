@@ -255,8 +255,9 @@ bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int us
     for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
         if((*it).second.empty())
             continue;
-        if((*it).second.at(0).via_hop==nextHop && (*it).second.at(0).destID!=nextHop){
-            (*it).second.at(0).cost=(*it).second.at(0).cost+cst-usedcst;
+        if((*it).second.at(0).via_hop==nextHop){ //&& {
+		if((*it).second.at(0).destID!=nextHop)
+            		(*it).second.at(0).cost=(*it).second.at(0).cost+cst-usedcst;
             (*it).second.at(0).time_stamp=0;
             if(cst!=usedcst)
                 changed=true;
