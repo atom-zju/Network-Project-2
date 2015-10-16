@@ -30,13 +30,13 @@ void FwdTable::set_router_id(unsigned short router_id)
 /*@
   @ check and remove all the outdated entries, return whether changed
   @*/
-bool FwdTable::check_DV()
+bool FwdTable::check()
 {
     bool changed=false;
     queue<int> clear_vec;
     for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
         if(!(*it).second.empty()){
-            if((*it).second.at(0).time_stamp>MAX_DV_TIMESTAMP){
+            if((*it).second.at(0).time_stamp>MAX_DV_LS_TIMESTAMP){
                 //fwd_table.erase((*it).first);
                 clear_vec.push((*it).first);
             }
@@ -44,8 +44,11 @@ bool FwdTable::check_DV()
     }
     while(!clear_vec.empty()){
         int entry_num=clear_vec.front();
-        fwd_table[entry_num].clear();
-        fwd_table.erase(entry_num);
+        if(entry_num!=id){
+            //do not clear self entry
+            fwd_table[entry_num].clear();
+            fwd_table.erase(entry_num);
+        }
         clear_vec.pop();
         //changed=true;
     }
@@ -55,7 +58,7 @@ bool FwdTable::check_DV()
 /*@
   @ increase the time stamp of each entry by 1
   @*/
-void FwdTable::inc_tstamp_DV()
+void FwdTable::inc_tstamp()
 {
     for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
         if(!(*it).second.empty())
@@ -287,6 +290,10 @@ bool FwdTable::analysis_data(void *packet, unsigned short size, unsigned short& 
         if(fwd_table[dest].empty())
             return false;
         nextID=fwd_table[dest].at(0).via_hop;
+        if(nextID==USHRT_MAX){
+            //has the entry, but cannot reach
+            return false;
+        }
         return true;
     }
 }
@@ -297,4 +304,239 @@ bool FwdTable::analysis_data(void *packet, unsigned short size, unsigned short& 
 int FwdTable::size()
 {
     return fwd_table.size();
+}
+
+/*@
+  @ increase the series num by 1
+  @*/
+void FwdTable::inc_series_num()
+{
+    seriesNum++;
+}
+
+/*@
+  @ set series num to zero
+  @*/
+void FwdTable::set_series_num_zero()
+{
+    seriesNum=0;
+}
+
+/*@
+  @ analyse LS packet, return whether need to flood this message
+  @*/
+bool FwdTable::analysis_LS(void *packet, unsigned short size)
+{
+    unsigned short t;
+    bool changed=false;
+    t = *((unsigned char *)packet);
+    if(t!=4){
+    //const char *sPacketType[] = {"DATA","PING","PONG","DV","LS"};
+    //if(strcmp(sPacketType[t],"LS")){
+        // packet is not "LS" type
+        std::cout<<"Err: received packet is not 'LS' type."<<std::endl;
+        //free(packet);
+        return false;
+    }
+    if(size<12){
+        // size is small than minimal size
+        std::cout<<"Err: received 'LS' packet is too small."<<std::endl;
+        //free(packet);
+        return false;
+    }
+
+    //get router ID from the packet
+    unsigned short routerID=(unsigned short) ntohs(*((unsigned short*)packet+2));
+    unsigned int SN=(unsigned int) ntohl(*((unsigned int*)packet+2));
+
+    if(fwd_table.find(routerID) != fwd_table.end()){
+        //if there is an entry in the table
+        if(!fwd_table[routerID].empty()){
+            //if the entry is not emtpty
+            if(fwd_table[routerID].at(0).s_num>=SN){
+                //if series number has seen before
+                return false;
+            }
+        }
+    }
+
+    //else case: it is the newest series num, reconstruct neighbor vector
+    fwd_table[routerID].clear();
+    changed=true;
+
+    unsigned short pass=size/4-3;
+
+    for(int i=0;i<pass;i++){
+
+        //get neighbor router ID and cost
+        unsigned short neighborID=(unsigned short) ntohs(*((unsigned short*)packet+6+2*i));
+        unsigned short cst=(unsigned short) ntohs(*((unsigned short*)packet+7+2*i));
+        //in LS, neighbor ID will be stored in destID and next hop will be infinity
+        fwd_table[routerID].push_back(FwdEntry(neighborID,cst,USHRT_MAX,SN));
+    }
+
+    return changed;
+}
+
+/*@
+  @ make LS packet
+  @*/
+void* FwdTable::make_pkt_LS(unsigned short& pktsize)
+{
+    char* packet;
+    if(fwd_table.find(id)==fwd_table.end()){
+        //cannot find self entry
+        std::cout<<"cannot find self entry in LS table"<<std::endl;
+    }
+    pktsize=12+4*fwd_table[id].size();
+    packet=(char*)malloc(pktsize);
+
+    //write packet type
+    *(unsigned char *)packet=4; // 3 is the index of "LS" in sPacketType[] = {"DATA","PING","PONG","DV","LS"};
+    //write total size
+    *((unsigned short *)packet+1)=(unsigned short) htons((unsigned short)pktsize);
+    //write source id
+    *((unsigned short *)packet+2)=(unsigned short) htons((unsigned short)id);
+    //write series number
+    *((unsigned int *)packet+2)=(unsigned int) htonl((unsigned int)seriesNum);
+
+    //write node-cost pair
+    for(unsigned int i=0;i<fwd_table[id].size();i++){
+        //wirte neighbor node id
+        *((unsigned short *)packet+6+2*i)=(unsigned short) htons((unsigned short)fwd_table[id].at(i).destID);
+        //write cost
+        *((unsigned short *)packet+7+2*i)=(unsigned short) htons((unsigned short)fwd_table[id].at(i).cost);
+    }
+    return (void*)packet;
+}
+
+/*@
+  @ try to update LS table, used when received pong, or check() timeout
+  @*/
+bool FwdTable::try_update_LS(unsigned short toID,unsigned int cst)
+{
+    for(unsigned int i=0;i<fwd_table[id].size();i++){
+        if(fwd_table[id].at(i).destID==toID){
+            //find corresponding entry with toID
+            if(cst==USHRT_MAX){
+                //if cst == infinity, eleminate entry
+                fwd_table[id].erase(fwd_table[id].begin()+i);
+                return true;
+            }
+            if(fwd_table[id].at(i).cost!=cst){
+                //if cost!=cst,table changed, return true
+                fwd_table[id].at(i).cost=cst;
+                return true;
+            }
+            else{
+                //table not changed, return false
+                return false;
+            }
+        }
+    }
+    //do not contains corresponding fwdentry
+    if(cst!=USHRT_MAX){
+        fwd_table[id].push_back(FwdEntry(toID,cst,id,0));
+        return true;
+    }
+    else{
+        //entry try to eleminate does not exist
+        return false;
+    }
+}
+
+/*@
+  @ regenerate the shortest path algorithm using dijastra algorithm
+  @*/
+bool FwdTable::SP_regenerate()
+{
+    int max_key=0;
+    bool changed=false;
+    //find max router id in the hash map
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if((*it).first>max_key){
+            max_key=(*it).first;
+        }
+    }
+
+    //dist is used to store the distance, path_to is used to store parant node
+    unsigned int dist[max_key+1];
+    unsigned short path_to[max_key+1];
+    bool marked[max_key+1];
+
+    //initilize two array
+    for(int i=0; i<max_key+1;i++){
+        dist[i]=UINT_MAX;
+        marked[i]=false;
+        path_to[i]=USHRT_MAX;
+    }
+
+    //dist to self node is 0
+    dist[id]=0;
+    //path_to[id]=USHRT_MAX;
+
+
+    //begin construct shortest path tree
+    while(true){
+
+        unsigned int min_dis=UINT_MAX;
+        unsigned short min_dis_idx;
+
+
+        //find the unvisited node with the shortest dist
+        for(int i=0;i<max_key+1;i++){
+            if(dist[i]<min_dis && marked[i]==false){
+                min_dis=dist[i];
+                min_dis_idx=i;
+            }
+        }
+
+        if(min_dis==UINT_MAX){
+            //tranversed all the possible nodes, not found anything, terminate
+            break;
+        }
+
+        marked[min_dis_idx]=true;
+        if(fwd_table.find(min_dis_idx)==fwd_table.end())
+            continue;
+        if(fwd_table[min_dis_idx].empty()){
+            continue;
+        }
+
+
+        //relax each adjacent node of min_dist_idx
+        for(unsigned int i=0;i<fwd_table[min_dis_idx].size();i++){
+            //prevent crash if destID is larger than max_key
+            if(fwd_table[min_dis_idx].at(i).destID>max_key)
+                continue;
+            if(dist[fwd_table[min_dis_idx].at(i).destID]>dist[min_dis_idx]+fwd_table[min_dis_idx].at(i).cost){
+                //if find a shorter path
+                dist[fwd_table[min_dis_idx].at(i).destID]=dist[min_dis_idx]+fwd_table[min_dis_idx].at(i).cost;
+                path_to[fwd_table[min_dis_idx].at(i).destID]=min_dis_idx;
+            }
+        }
+    }
+    //by now SPT has been constructed, store the direct neighbor into via_hop
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        unsigned short i=(*it).first;
+        for(;path_to[i]!=id;i=path_to[i]){
+            //moving in the SPT backwards to find the first direct neighbors of self
+            if(path_to[i]==USHRT_MAX){
+                //has the entry, but cannot reach
+                i=USHRT_MAX;
+                break;
+            }
+        }
+
+        if((*it).second.empty()){
+            continue;
+        }
+
+        if((*it).second.at(0).via_hop!=i){
+            //changed the forward table
+            (*it).second.at(0).via_hop=i;
+            changed=true;
+        }
+    }
+    return changed;
 }

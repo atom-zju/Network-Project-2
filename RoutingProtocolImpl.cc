@@ -27,6 +27,7 @@ void RoutingProtocolImpl::init(unsigned short num_ports, unsigned short router_i
 
     fwdtable.set_protocol(protocol_type);
     fwdtable.set_router_id(router_id);
+    fwdtable.set_series_num_zero();
 
     //set up ping alarm
     AlarmType *d=(AlarmType *)malloc(sizeof(AlarmType));
@@ -40,7 +41,11 @@ void RoutingProtocolImpl::init(unsigned short num_ports, unsigned short router_i
 
     //set up DV alarm
     d=(AlarmType *)malloc(sizeof(AlarmType));
-    *d=periodic_DV;
+    if(protocol_type==P_DV)
+        *d=periodic_DV;
+    else{
+        *d=periodic_LS;
+    }
     sys->set_alarm(this,30*1000,d);
 }
 
@@ -61,15 +66,28 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
         break;
     }
     case periodic_DV:
+    case periodic_LS:
     {
         sys->set_alarm(this,30*1000,data);
-        unsigned short pktsize,ID;
-        char* pkt;
-        for(int i=0;i<porttable.size();i++){
-            if(!porttable.port2ID(i,ID))
-                continue;
-            pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
-            sys->send(i,pkt,pktsize);
+        if(ptcl==P_DV){
+            unsigned short pktsize,ID;
+            char* pkt;
+            for(int i=0;i<porttable.size();i++){
+                if(!porttable.port2ID(i,ID))
+                    continue;
+                pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
+                sys->send(i,pkt,pktsize);
+            }
+        }
+        else{
+            //else case, ptcl==P_LS, make LS packet and send to all ports=================================================================================================
+            unsigned short pktsize;
+            char* pkt;
+            for(int i=0;i<porttable.size();i++){
+                pkt=(char*)fwdtable.make_pkt_LS(pktsize);
+                sys->send(i,pkt,pktsize);
+                fwdtable.inc_series_num();
+            }
         }
         break;
     }
@@ -80,14 +98,19 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
         bool changed=false;     //indicate whether fwdtable has changed
         //check forward table
         if(ptcl==P_DV){
-            fwdtable.inc_tstamp_DV();
-            if(fwdtable.check_DV()){
+            fwdtable.inc_tstamp();
+            if(fwdtable.check()){
                 //if fwdtable changed
                 changed=true;
             }
         }
         else{
             //check P_LS
+            fwdtable.inc_tstamp();
+            if(fwdtable.check()){
+                //if fwdtable changed, regenerate shortest path
+                fwdtable.SP_regenerate();
+            }
         }
         //check port table
         porttable.inc_tstamp();
@@ -95,7 +118,16 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
             //if there is something changed in the porttable
             while(!change_list.empty()){
                 unsigned short outdatedID=change_list.front();
-                if(fwdtable.try_update(outdatedID,USHRT_MAX,0,outdatedID)){
+                if(ptcl==P_DV){
+                    //if ptcl is DV
+                    if(fwdtable.try_update(outdatedID,USHRT_MAX,0,outdatedID)){
+                        changed=true;
+                    }
+                }
+                else{
+                    //ptcl is LS
+                    //try_update_LS in fwdtable, remove all invalid neighbors=======================================================================================
+                    fwdtable.try_update_LS(outdatedID,UINT_MAX);
                     changed=true;
                 }
                 change_list.pop();
@@ -103,13 +135,27 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
         }
         if(changed){
             //if fwdtable changed, send newest table
-            unsigned short pktsize,ID;
-            char* pkt;
-            for(int i=0;i<porttable.size();i++){
-                if(!porttable.port2ID(i,ID))
-                    continue;
-                pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
-                sys->send(i,pkt,pktsize);
+            if(ptcl==P_DV){
+                unsigned short pktsize,ID;
+                char* pkt;
+                for(int i=0;i<porttable.size();i++){
+                    if(!porttable.port2ID(i,ID))
+                        continue;
+                    pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
+                    sys->send(i,pkt,pktsize);
+                }
+            }
+            else{
+                //ptcl == LS
+                //increase series number,regenerate shortest path, make LS packet, send to all ports==================================================
+                fwdtable.SP_regenerate();
+                unsigned short pktsize;
+                char* pkt;
+                for(int i=0;i<porttable.size();i++){
+                    pkt=(char*)fwdtable.make_pkt_LS(pktsize);
+                    sys->send(i,pkt,pktsize);
+                    fwdtable.inc_series_num();
+                }
             }
         }
         break;
@@ -134,24 +180,47 @@ void RoutingProtocolImpl::recv(unsigned short port, void *packet, unsigned short
         //if received pong message
         unsigned short fromID;
         unsigned int dly,useddly;
+        bool port_changed=false;
         if(porttable.get_delay(port,useddly)){
             //there used to be a record, store useddly
             porttable.analysis_pong(port,packet,sys->time(),fromID,dly);
+            if(dly!=useddly)
+                port_changed=true;
         }
         else{
             //there is no useddly
             porttable.analysis_pong(port,packet,sys->time(),fromID,dly);
             useddly=dly;
+            port_changed=true;
         }
-        if(fwdtable.try_update(fromID,dly,useddly,fromID)){
-            //if fwdtable has changed, send DV to all ports
-            unsigned short pktsize,ID;
-            char* pkt;
-            for(int i=0;i<porttable.size();i++){
-                if(!porttable.port2ID(i,ID))
-                    continue;
-                pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
-                sys->send(i,pkt,pktsize);
+        if(ptcl==P_DV){
+            if(fwdtable.try_update(fromID,dly,useddly,fromID)){
+                //if fwdtable has changed, send DV to all ports
+                unsigned short pktsize,ID;
+                char* pkt;
+                for(int i=0;i<porttable.size();i++){
+                    if(!porttable.port2ID(i,ID))
+                        continue;
+                    pkt=(char*)fwdtable.make_pkt_DV(ID,pktsize);
+                    sys->send(i,pkt,pktsize);
+                }
+            }
+        }
+        else{
+            //ptcl == P_LS
+            if(port_changed){
+                //if port changed, try_update_LS, regenerate shortest path, make LS packet and send to all port==================================
+                if(fwdtable.try_update_LS(fromID,dly)){
+                    //if anything changed in LS table
+                    fwdtable.SP_regenerate();
+                    unsigned short pktsize;
+                    char* pkt;
+                    for(int i=0;i<porttable.size();i++){
+                        pkt=(char*)fwdtable.make_pkt_LS(pktsize);
+                        sys->send(i,pkt,pktsize);
+                        fwdtable.inc_series_num();
+                    }
+                }
             }
         }
         free(packet);
@@ -178,6 +247,25 @@ void RoutingProtocolImpl::recv(unsigned short port, void *packet, unsigned short
             //get delay failed, do nothing
         }
     free(packet);
+    }
+    else if(t==4){
+        //else if(!strcmp(sPacketType[t],"LS")){
+        //if received LS message
+        //fwdtable.analysis_LS() return whether need to flood this LS message, if so, flood LS message=======================================================================
+        if(fwdtable.analysis_LS(packet,size))
+        {
+            //if it's a new packet, update LS, flood the message
+            fwdtable.SP_regenerate();
+            char* pkt;
+            for(int i=0;i<porttable.size();i++){
+                //make a copy of the original message and send
+                pkt=(char*)malloc(size);
+                memcpy(pkt,packet,size);
+                sys->send(i,pkt,size);
+            }
+        }
+
+        free(packet);
     }
     else if(t==0){
     //else if(!strcmp(sPacketType[t],"DATA")){

@@ -5,7 +5,7 @@
 #include "fwdtable.h"
 #include "porttable.h"
 
-enum AlarmType{periodic_DV,periodic_PING,one_sec_check};
+enum AlarmType{periodic_DV,periodic_PING,one_sec_check,periodic_LS};
 
 class RoutingProtocolImpl : public RoutingProtocol {
   public:
