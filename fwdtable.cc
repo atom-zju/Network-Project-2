@@ -143,6 +143,15 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
                 changed=true;
             }
             else{
+	      if (fwd_table[desID].at(0).via_hop==nextHop) {
+		//although new path is no shorter than previous one, if it is the same path, update delay and time_stamp
+		fwd_table[desID].at(0).time_stamp=0;
+		if(delay+cst!=fwd_table[desID].at(0).cost){
+		  fwd_table[desID].at(0).cost=delay+cst;
+		  changed=true;
+		}
+		
+	      }
                 //new path is longer than previous one, do nothing
             }
         }
@@ -153,7 +162,7 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
     for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
         if((*it).second.empty())
           continue;
-	if((*it).second.at(0).via_hop==nextHop){
+	if((*it).second.at(0).via_hop==nextHop && (*it).second.at(0).via_hop!=(*it).second.at(0).destID){
 	  //if previously we use nextHop to reach destination, make sure destID is in the contains_vec
 	  unsigned short j=0;
 	  for(;j<contains_vec.size();j++){
