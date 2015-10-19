@@ -50,7 +50,7 @@ bool FwdTable::check()
             fwd_table.erase(entry_num);
         }
         clear_vec.pop();
-        //changed=true;
+        changed=true;
     }
     return changed;
 }
@@ -93,6 +93,9 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
     unsigned short nextHop=(unsigned short) ntohs(*((unsigned short*)packet+2));
 
     unsigned short pass=size/4-2;
+    
+    //contains_vec  is used to contain all the entries in DV packet
+    std::vector<unsigned short> contains_vec;
 
     //start parse packet content
     for(int i=0;i<pass;i++){
@@ -108,6 +111,9 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
             //poison reverse info, ignore
             continue;
         }
+
+	//put desID into the contains_vec
+	contains_vec.push_back(desID);
 
         if(fwd_table.find(desID) == fwd_table.end()){
         //do not have path to desID previously, insert a new entry
@@ -141,6 +147,40 @@ bool FwdTable::analysis_DV(void *packet, unsigned short size,unsigned int delay)
             }
         }
     }
+    //clear vec is used to clear entries up
+    std::queue<unsigned short> clear_vec;
+
+    for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if((*it).second.empty())
+          continue;
+	if((*it).second.at(0).via_hop==nextHop){
+	  //if previously we use nextHop to reach destination, make sure destID is in the contains_vec
+	  unsigned short j=0;
+	  for(;j<contains_vec.size();j++){
+	    if((*it).second.at(0).destID ==  contains_vec.at(j)){
+	      //if find destID in the DV packet
+	      break;
+	    }
+	  }
+	  if(j==contains_vec.size()){
+	    //if entry not found in contains_vec
+	    clear_vec.push((*it).first);
+	  }
+	}
+    }
+
+    //clear the clear_vec
+    while(!clear_vec.empty()){
+      int entry_num=clear_vec.front();
+      if(entry_num!=id){
+	//do not clear self entry
+	fwd_table[entry_num].clear();
+	fwd_table.erase(entry_num);
+      }
+      clear_vec.pop();
+      changed=true;
+    }
+    
     //free(packet);
     return changed;
 }

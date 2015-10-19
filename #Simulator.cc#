@@ -27,8 +27,8 @@ unsigned int Simulator::time() {
 
 void Simulator::set_alarm(RoutingProtocol *r, unsigned int duration, void *d) {
   Event *e;
-  e = new Event_Alarm(r, d, global_time + duration, protocol_table[(char *) r]);
-  event_q.push(e);
+  e = new Event_Alarm(r, d, global_time + duration, protocol_table[(char *) r]);[[[[[M#u?M t?[M t?M t?[M s?M s?[M r?M r?[[M r?[M r?M[M s? [M s?[M t?y[M u??[M v?[[M w?[M w?M[M x? [M x?[M y?z[[M |?[M {?M {??
+		event_q.push(e);[M |@[M |@[M |@[M {@[M z@[M y@[M q@[M q?
 }
 
 void Simulator::init_routing_protocol(eProtocolType type) {
