@@ -266,7 +266,7 @@ bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int us
             fwd_table[rmID].clear();
             fwd_table.erase(rmID);
             clear_vec.pop();
-            //changed=true;
+            changed=true;
         }
         return changed;
     }

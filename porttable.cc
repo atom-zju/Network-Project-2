@@ -159,7 +159,7 @@ bool PortTable::analysis_pong(unsigned short port, void *packet, unsigned int gl
     fromID=(unsigned short) ntohs(*((unsigned short*)packet+2));
     dly=(unsigned int) ntohl(*((unsigned int*)packet+2));
     dly=global_time-dly;
-    if(port_table[port].time_stamp<0||port_table[port].delay!=dly){
+    if(port_table[port].time_stamp<0||port_table[port].delay!=dly||port_table[port].routerID!=fromID){
         port_table[port].portNo=port;
         port_table[port].routerID=fromID;
         port_table[port].delay=dly;
@@ -167,6 +167,8 @@ bool PortTable::analysis_pong(unsigned short port, void *packet, unsigned int gl
         //free(packet);
         return true;
     }
+    //else if port_table[port].time_stamp==0 && port_table[port].delay==dly, routerID==fromID, refresh time_stamp
+    port_table[port].time_stamp=0;
     //free(packet);
     return false;
 }
