@@ -1,0 +1,15 @@
+
+[nodes]
+
+1 2
+
+[links]
+
+(1,2) delay 0.010 prob 0.0
+
+
+[events]
+
+9.99 linkdying (1,2)
+199.99 linkcomingup (1,2)
+500.00 end
