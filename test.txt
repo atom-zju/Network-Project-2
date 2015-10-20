@@ -1,0 +1,20 @@
+Test case configuration files are included in the mytest directory.
+
+We developed configurations to test our routing protocols, both at the component and system levels.
+
+Different configuration files test different aspects of our implementation, including corner cases and our ability to perform require tasks in multiple scenarios:
+
+mytest1, 6NodesComplex.test - mytest1 tests, first, establishing the correct forwarding tables for both routing protocols given a complex graph topology with many different delay values. Once those routes are established correctly, multiple essential links in the graph are brought down to test our ability to reconfigure our forwarding tables based on these changes, and forward data packets accordingly. As a consequence, our ability to send, receive, and properly update DV and LS packets are tested here as well.  
+
+mytest2 - 
+
+mytest3 - 
+
+ctiTest - This test sepcifically tests a case brought up in class, the count to infinity problem, and if we properly use poision reverse to avoid that issue. We used this test to edit aspects of our DV protocol, and test the correctness of our LS protocol. We start with three interconected nodes, and allow them to develop their forwarding tables, with one specific route heavily favored. We then change the delay of the favored path, making it no longer the prefered route for any node, to test our DV packet updating abilities and our poision reverse. The routers find this update, and adjust the forwarding tables accordingly. We send a data packet between nodes before and after the delay change to ensure that, indeed, the forwarding tables and packet route did change.
+
+homeworkTest - 
+
+At the component level:
+
+At the system level: 
+
