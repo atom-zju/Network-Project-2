@@ -308,7 +308,7 @@ bool FwdTable::try_update(unsigned short desID, unsigned int cst,unsigned int us
         if((*it).second.empty())
             continue;
         if((*it).second.at(0).via_hop==nextHop){ //&& {
-		if((*it).second.at(0).destID!=nextHop)
+	  //if((*it).second.at(0).destID!=nextHop)
             		(*it).second.at(0).cost=(*it).second.at(0).cost+cst-usedcst;
             (*it).second.at(0).time_stamp=0;
             if(cst!=usedcst)
