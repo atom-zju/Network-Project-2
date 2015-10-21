@@ -12,7 +12,7 @@ Files Descriptions:
 			file “Simulator” as well as some other .o files
 	Node.cc		node class used by simulator, given by instructor
 	Node.h		header for node class, given by instructor
-	README	this file
+	README		this file
 	RoutingProtocol.h	define the interface of routing protocol, 
 				given by instructor
 	RoutingProtocolImpl.cc	DV and LS implementation of routing protocol 
