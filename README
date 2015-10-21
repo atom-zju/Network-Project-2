@@ -8,25 +8,20 @@ Files Descriptions:
 	Event.h		header for event class, given by instructor
 	Link.cc		link class used by simulator, given by instructor
 	Link.h		header for link class, given by instructor
-	Makefile	compile the program, should generate a executable 
-			file “Simulator” as well as some other .o files
+	Makefile	compile the program, should generate a executable file “Simulator” as well as some other .o files
 	Node.cc		node class used by simulator, given by instructor
 	Node.h		header for node class, given by instructor
 	README		this file
-	RoutingProtocol.h	define the interface of routing protocol, 
-				given by instructor
+	RoutingProtocol.h	define the interface of routing protocol, given by instructor
 	RoutingProtocolImpl.cc	DV and LS implementation of routing protocol 
 	RoutingProtocolImpl.h	header for class of routing protocol implementation
-	Simulator.cc	simulator class that simulate the network 
-			environment defined by configure file, given by instructor
+	Simulator.cc	simulator class that simulate the network environment defined by configure file, given by instructor
 	Simulator.h	header file for simulator class, given by instructor
 	fwdtable.cc	forwarding table class supporting both DV and LS protocols
 	fwdtable.h	header file for forward table class
 	global.h	global constant definitions, given by instructor
-	mytest		folder contains all test cases, see test.txt 
-			for more information
-	porttable.cc	port table class that records all neighbor nodes, 
-			the ports to them and the delays to them
+	mytest		folder contains all test cases, see test.txt for more information
+	porttable.cc	port table class that records all neighbor nodes, the ports to them and the delays to them
 	porttable.h	header file for forward table class
 	test.txt	describes details about test strategy and test cases
 
