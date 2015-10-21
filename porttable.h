@@ -34,6 +34,7 @@ public:
     void* make_pkt_ping(unsigned int global_time,unsigned short& pktsize);      //make ping pkt
     unsigned short size();      //return the size of table
     bool get_delay(unsigned short port, unsigned int& dly); //get port delay by port #, return whetehr succeeded
+    void print();  //print out current content to standard output
 
 private:
     unsigned short num_ports;

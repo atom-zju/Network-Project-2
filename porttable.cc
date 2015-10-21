@@ -207,5 +207,18 @@ bool PortTable::get_delay(unsigned short port, unsigned int &dly)
     return true;
 }
 
-
+/*@
+  @ print out current content to standard output
+  @*/
+void PortTable::print()
+{
+  std::cout << "*****Port table looks like this:*****" << "\n";
+      for(int i=0;i<num_ports;i++){
+        if(port_table[i].time_stamp<0)
+            continue;
+	std::cout << "=============================" << "\n";
+	std::cout <<"(self)"<< id << " ->->->->->- " <<port_table[i].routerID<<"(neighbor)"<<"\tport:"<<port_table[i].portNo<<"\tdelay:"<<port_table[i].delay<< "\n";
+	std::cout << "time_stamp="<<port_table[i].time_stamp  << "\n";
+    }
+}
 

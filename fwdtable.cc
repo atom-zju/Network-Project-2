@@ -589,3 +589,34 @@ bool FwdTable::SP_regenerate()
     }
     return changed;
 }
+
+
+/*@
+  @ print out current content to standard output
+  @*/
+void FwdTable::print()
+{
+    if (ptcl==P_DV) {
+      std::cout << "*****Local DV looks like this:*****" << "\n";
+      for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if(!(*it).second.empty()){
+	  std::cout << "===============================" << "\n";
+	  std::cout <<"(path_from)"<<id<<" ->->->-> "<<(*it).second.at(0).destID<<"(path_to)"<<"\tvia "<<(*it).second.at(0).via_hop<<"\tcost="<<(*it).second.at(0).cost<< "\n";
+	  std::cout << "time_stamp=" <<(*it).second.at(0).time_stamp<< "\n";
+        }
+      }
+    }
+    else {
+      std::cout << "*****Global graph looks like this:*****" << "\n";
+      for(hash_map<int, vector<FwdEntry> >::iterator it=fwd_table.begin(); it!=fwd_table.end(); it++){
+        if(!(*it).second.empty()){
+	  std::cout  << "\n";
+	  std::cout << "id:"<<(*it).first<<"\tget_there_via:"<<(*it).second.at(0).via_hop<<"\tseries No:"<<(*it).second.at(0).s_num<< "\n";
+	  for (unsigned int i = 0; i < (*it).second.size(); i++) {
+	    std::cout << "=================================" << "\n";
+	    std::cout <<"(host)"<<(*it).first<<" ->->->->- "<<(*it).second.at(i).destID<<"(neighbor)"<<"\tcost="<<(*it).second.at(i).cost<< "\n";
+	  } 
+        }
+      }
+    }
+}

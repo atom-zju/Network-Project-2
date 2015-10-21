@@ -41,6 +41,7 @@ public:
     bool SP_regenerate();   //regenerate the shortest path algorithm
     void inc_series_num();       //increase series num by 1
     void set_series_num_zero();       //set series num to 0
+    void print();    //print out current content to standard output
 private:
     eProtocolType ptcl;
     hash_map<int, vector<FwdEntry> > fwd_table;
