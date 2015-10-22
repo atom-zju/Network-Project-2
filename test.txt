@@ -7,7 +7,38 @@ scenarios that we developed. Different configuration files test different aspect
 including corner cases and our ability to perform require tasks in multiple scenarios. We also used
 the provided simple test cases to test simple packet transmission and routing calculation.
 
-Test Descriptions:
+Test Strategy:
+==================
+
+Components test: we divided our whole system into 4 parts to test: set/handle alarms, send/receive/process packet, 
+port table, and forwarding table.
+
+1. set/handle alarms: We tested the set/handle alarm process at the very beginning of the project. First we tested 
+if we can call the system call “set_alarm” correctly by putting a string into parameter. In “handle_alarm”, we just 
+printed the previously set string. After implementing all four types of alarm, we used simpletest1 to check if they 
+run in a correct way.
+
+2. send/receive/process packet: We tested this part after implementing actions for all packet types. We put some 
+arbitrary contents into packets and after the packets is delivered and processed, those contents would be printed 
+put immediately. Then we also hard-coded packets with designated content and used simpletest1 to test if the 
+protocol behaved well after we implemented the port table.
+
+3. port table: In port table, it needs to keep tracking and recording all neighbors’ ID, corresponding ports, 
+delays, and timestamps. To ensure the algorithm and data structure act flawlessly, we implemented a method to print 
+out entire table and we run several test cases in gdb, printing whole table step by step. 
+
+4. forwarding table: Same as port table. We also implemented a method to print out whole table. What’s more, for DV 
+protocol, we developed 2 more test cases, 4NodesHomework.test, and 3NodesPoisonReverse.test, to test if the poison 
+reverse was performing right. For LS protocol, we also run and analyzed all test cases to examine its correctness. 
+Details about these cases will be shown below.
+
+System test: after implemented all features of the system, we tested them as a whole system. We first executed 
+three simpletest cases given by instructor, comparing results with the given outputs. After eliminating several 
+minor bugs, we created a complex case, 15NodesComplex.test, to inspect the robustness of our system. Finally, we 
+developed two corner-case tests, 3NodesLinkDead.test, and 4NodesDelayUpAndDown.test, to inspect if our protocols 
+could handle such cases and switch to correct paths. Details about these cases will be shown below.
+
+Test File Descriptions:
 ==================
 
 15NodesComplex.test - This scenario, first, tests our systems ability to handle larger amounts 
@@ -59,3 +90,9 @@ the now disconnected node; we show this by attempting to send a packet from the 
 and see that the packets will be lost due to having no known path to the router, as expected. The outputs for the
 DV and LS tests are in 4NodesHomework.test_DV.out and 4NodesHomework.test_LS.out, respectively. 
 
+*.out – .out files are the out put files from each test cases. One test case should have 2 .out files, _DV.out and
+_LS.out, which are corresponding to DV protocol and LS protocol.
+
+test.sh – a shell script used to run all test files one by one.
+
+simpletest1,2,3 and .desc - simple test cases given by instructor.
