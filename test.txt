@@ -38,7 +38,7 @@ System test: after implemented all features of the system, we tested them as a w
 three simpletest cases given by instructor, comparing results with the given outputs. After eliminating several 
 minor bugs, we created a complex case, 15NodesComplex.test, to inspect the robustness of our system. Finally, we 
 developed two corner-case tests, 3NodesLinkDead.test, and 4NodesDelayUpAndDown.test, to inspect if our protocols 
-could handle such cases and switch to correct paths. Details about these cases will be shown below.
+could handle such cases and switch to correct paths. Details about these cases will be shown below. We also tested memory leakage by valgrind. The result showed that no leakage occured in our code. 
 
 Test File Descriptions:
 =======================
