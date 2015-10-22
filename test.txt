@@ -59,7 +59,3 @@ the now disconnected node; we show this by attempting to send a packet from the 
 and see that the packets will be lost due to having no known path to the router, as expected. The outputs for the
 DV and LS tests are in 4NodesHomework.test_DV.out and 4NodesHomework.test_LS.out, respectively. 
 
-At the component level:
-
-At the system level: 
-
