@@ -40,10 +40,24 @@ the delay change to ensure that, indeed, the forwarding tables and packet route 
 for the DV and LS tests are in 3NodesPoisonReverse.test_DV.out and 3NodesPoisonReverse.test_LS.out, 
 respectively. 
 
-4NodesDelayUpAndDown.test - 
+4NodesDelayUpAndDown.test - This test concerns our routing abilities to find the best possible route, given
+multiple routes in a router/link topology. In this test, we have four nodes connected by four links. We send the 
+same data packet multiple times throughout the test in order to see, and confirm, the route chosen by the 
+system is the correct path given the link delays. After the first transmission, the link delays change, testing 
+our system’s ability to detect these changes and recalculate routing paths. This happens again after the second
+transmission, with the delay value going down. We then test our system’s ability to respond to link failures, and 
+to redirect packet routing over the still connected routes. The success of the packet routing can be seen through
+the packet transmissions from the same origin to the same destination after each topology change and how the 
+route in each case is chosen.
 
 4NodesHomework.test - This test specifically addresses a case brought up in the homework, namely, the possibility 
-of forming routing loops after the failure of a link. 
+of forming routing loops after the failure of a link. Given the four node graph from Homework #1, problem #6, we 
+establish the proper routing tables, and then send a packet of information from a node to the node connected by only
+a single link. We then have that link fail in order to test our ability to avoid a routing loop. As we desired, 
+once the link fails, the still-connected nodes are updated to see that there is no path in which they can reach
+the now disconnected node; we show this by attempting to send a packet from the connected nodes to this other node,
+and see that the packets will be lost due to having no known path to the router, as expected. The outputs for the
+DV and LS tests are in 4NodesHomework.test_DV.out and 4NodesHomework.test_LS.out, respectively. 
 
 At the component level:
 
