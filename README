@@ -1,0 +1,77 @@
+Group Members:
+====================
+	Boyang Bai   - bb26
+	Runhua Zhang - rz18
+	Riley Gibson - rdg2
+
+Files Descriptions:
+====================
+	Event.cc	event class used by simulator, given by instructor
+	Event.h		header for event class, given by instructor
+	Link.cc		link class used by simulator, given by instructor
+	Link.h		header for link class, given by instructor
+	Makefile	compile the program, should generate a executable file “Simulator” as well as some other .o files
+	Node.cc		node class used by simulator, given by instructor
+	Node.h		header for node class, given by instructor
+	README		this file
+	RoutingProtocol.h	define the interface of routing protocol, given by instructor
+	RoutingProtocolImpl.cc	DV and LS implementation of routing protocol 
+	RoutingProtocolImpl.h	header for class of routing protocol implementation
+	Simulator.cc	simulator class that simulate the network environment defined by configure file, given by instructor
+	Simulator.h	header file for simulator class, given by instructor
+	fwdtable.cc	forwarding table class supporting both DV and LS protocols
+	fwdtable.h	header file for forward table class
+	global.h	global constant definitions, given by instructor
+	mytest		folder contains all test cases, see test.txt for more information
+	porttable.cc	port table class that records all neighbor nodes, the ports to them and the delays to them
+	porttable.h	header file for forward table class
+	test.txt	describes details about test strategy and test cases
+
+Implementation Summary:
+====================
+
+1)Self-defined Objects
+----------------------------------------
+	In order to divide our code in a reasonable way, we 
+created two objects, namely FwdTable and PortTable, to 
+handle the routing problem. The main objective for PortTable
+ is to store info about the local port table and handle ping
+ pong messages. Since the port table size is a fixed number,
+we used an array of self-defined table entries for 
+simplicity. The main objective for FwdTable is to store 
+info for DV or LS and process DV and LS messages. The 
+basic data structure being used is:
+hash_map< int, vector <FwdTableEntry> >
+where FwdTableEntry is a self-defined table entry. We 
+chose to use hash_map because of its extensibility and 
+quickness for responding to entry query.
+
+2)Types of event_alarm
+----------------------------------------
+	We defined four types of event_alarm, 
+corresponding to one second periodic check, periodic DV, 
+periodic LS and periodic ping.
+
+3)Strategies for RoutingProtocolImpl
+----------------------------------------
+	We added two instances of FwdTable and PortTable 
+into RoutingProtocolImpl. In the init() function, we 
+initialize these objects and put our first event_alarms 
+for one second periodic check, periodic ping and periodic
+ DV or LS into the event priority queue.
+        In the handle_alarm() function, we send out ping 
+messages or DV/LS messages when the event type is periodic 
+ping or periodic DV/LS. When the event type is one second 
+periodic check, we simply check the fwdtable and 
+porttable, remove outdated entries, and send out updated 
+DV/LS tables in the present of local changes.
+      In the recv() function, first we parse the type of 
+packet. If it is a ping/pong message, we hand over the 
+packet to porttable. If it is a DV/LS packet, we hand over
+the packet to fwdtable. Again, if there is any local 
+changes, we will send out the corresponding updated LS or DV 
+table. When DATA arrives, we hand it over to fwdtable to 
+first find out id of next router, then we find its 
+corresponding port number referring to porttable and 
+send it out; if we cannot find next router id or its port 
+number DATA will be lost.

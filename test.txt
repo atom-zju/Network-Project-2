@@ -1,0 +1,61 @@
+Test case configuration files and corresponding simulator outputs, differentiated by DV and LS, are 
+included in the mytest directory.
+
+We developed configurations to test our routing protocols, both at the component and system levels. 
+We also added a shell script (test.sh) to automate the testing process for the numerous testing 
+scenarios that we developed. Different configuration files test different aspects of our implementation, 
+including corner cases and our ability to perform require tasks in multiple scenarios. We also used
+the provided simple test cases to test simple packet transmission and routing calculation.
+
+Test Descriptions:
+==================
+
+15NodesComplex.test - This scenario, first, tests our systems ability to handle larger amounts 
+of nodes, in this case 15, that are largely interconnected with a complex topology with many 
+different delay values. Many data packets are sent between nodes in order to ensure that the 
+forwarding tables for all nodes have been correctly established for both DV and LS. The large 
+number of nodes in conjunction with the complex topology tests our ability to route packets across
+complex routes. The topology is then changed in our test by changing the delays of key links, and 
+then with certain links failing, in order to test our system’s robustness in adapting to new routing
+paths. The outputs for the DV and LS tests are in 15NodesComplex.test_DV.out and 15NodesComplex.test_LS.out,
+respectively.
+
+3NodesLinkDead.test - This scenario tests our system’s ability to adapt to link failures, and reconnections,
+between nodes. In this test, our three nodes are connected by two links. Protocol packets (DV or LS depending
+on the test protocol) and ping/pong messages are seen to be properly exchanged between the nodes prior to
+link failure. Once the failure occurs, those interactions between the connected nodes continues as it should,
+while the packets are lost trying to communicate with the disconnected node, as they should. Once the node
+is reconnected later in the test, proper communication between all three nodes is restored. This shows 
+our robustness in regards to link failures and reconnections. The outputs for the DV and LS tests are in
+3NodesLinkDead.test_DV.out and 3NodesLinkDead.test_LS.out, respectively.
+
+3NodesPoisonReverse.test - This test specifically tests a case brought up in class, the count to 
+infinity problem, and if we properly use poison reverse to avoid that issue. We used this test to 
+edit aspects of our DV protocol, and test the correctness of our LS protocol. We start with three 
+interconnected nodes, and allow them to develop their forwarding tables, with one specific route heavily 
+favored. We then change the delay of the favored path, making it no longer the preferred route for any 
+node, to test our DV packet updating abilities and our poison reverse. The routers find this update, 
+and adjust the forwarding tables accordingly. We send a data packet between nodes before and after 
+the delay change to ensure that, indeed, the forwarding tables and packet route did change. The outputs
+for the DV and LS tests are in 3NodesPoisonReverse.test_DV.out and 3NodesPoisonReverse.test_LS.out, 
+respectively. 
+
+4NodesDelayUpAndDown.test - This test concerns our routing abilities to find the best possible route, given
+multiple routes in a router/link topology. In this test, we have four nodes connected by four links. We send the 
+same data packet multiple times throughout the test in order to see, and confirm, the route chosen by the 
+system is the correct path given the link delays. After the first transmission, the link delays change, testing 
+our system’s ability to detect these changes and recalculate routing paths. This happens again after the second
+transmission, with the delay value going down. We then test our system’s ability to respond to link failures, and 
+to redirect packet routing over the still connected routes. The success of the packet routing can be seen through
+the packet transmissions from the same origin to the same destination after each topology change and how the 
+route in each case is chosen.
+
+4NodesHomework.test - This test specifically addresses a case brought up in the homework, namely, the possibility 
+of forming routing loops after the failure of a link. Given the four node graph from Homework #1, problem #6, we 
+establish the proper routing tables, and then send a packet of information from a node to the node connected by only
+a single link. We then have that link fail in order to test our ability to avoid a routing loop. As we desired, 
+once the link fails, the still-connected nodes are updated to see that there is no path in which they can reach
+the now disconnected node; we show this by attempting to send a packet from the connected nodes to this other node,
+and see that the packets will be lost due to having no known path to the router, as expected. The outputs for the
+DV and LS tests are in 4NodesHomework.test_DV.out and 4NodesHomework.test_LS.out, respectively. 
+
