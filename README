@@ -32,31 +32,31 @@ Implementation Summary:
 
 1)Self-defined Objects
 ----------------------------------------
-	Inorder to devided code in a reasonable way, we 
+	In order to divide our code in a reasonable way, we 
 created two objects, namely FwdTable and PortTable, to 
-handle the routing problem. Main objective for PortTable
- is to store info about local port table and handle ping
- pong messages. Since port table size is a fixed number,
-we used a array of self-defined table entry for 
+handle the routing problem. The main objective for PortTable
+ is to store info about the local port table and handle ping
+ pong messages. Since the port table size is a fixed number,
+we used an array of self-defined table entries for 
 simplicity. The main objective for FwdTable is to store 
 info for DV or LS and process DV and LS messages. The 
 basic data structure being used is:
 hash_map< int, vector <FwdTableEntry> >
 where FwdTableEntry is a self-defined table entry. We 
-choose to use hash_map becasue of its extensibility and 
+chose to use hash_map because of its extensibility and 
 quickness for responding to entry query.
 
 2)Types of event_alarm
 ----------------------------------------
 	We defined four types of event_alarm, 
-corresponding to one second peroidic check, peroidic DV, 
+corresponding to one second periodic check, periodic DV, 
 periodic LS and periodic ping.
 
 3)Strategies for RoutingProtocolImpl
 ----------------------------------------
 	We added two instances of FwdTable and PortTable 
 into RoutingProtocolImpl. In the init() function, we 
-initilize thses objects and put our first event_alarms 
+initialize these objects and put our first event_alarms 
 for one second periodic check, periodic ping and periodic
  DV or LS into the event priority queue.
         In the handle_alarm() function, we send out ping 
@@ -69,9 +69,9 @@ DV/LS tables in the present of local changes.
 packet. If it is a ping/pong message, we hand over the 
 packet to porttable. If it is a DV/LS packet, we hand over
 the packet to fwdtable. Again, if there is any local 
-changes, we will send out corresponding updated LS or DV 
+changes, we will send out the corresponding updated LS or DV 
 table. When DATA arrives, we hand it over to fwdtable to 
 first find out id of next router, then we find its 
 corresponding port number referring to porttable and 
-send it out, if we cannot find next router id or its port 
-number, DATA will get lost.
+send it out; if we cannot find next router id or its port 
+number DATA will be lost.

@@ -10,7 +10,7 @@ mytest2 -
 
 mytest3 - 
 
-ctiTest - This test sepcifically tests a case brought up in class, the count to infinity problem, and if we properly use poision reverse to avoid that issue. We used this test to edit aspects of our DV protocol, and test the correctness of our LS protocol. We start with three interconected nodes, and allow them to develop their forwarding tables, with one specific route heavily favored. We then change the delay of the favored path, making it no longer the prefered route for any node, to test our DV packet updating abilities and our poision reverse. The routers find this update, and adjust the forwarding tables accordingly. We send a data packet between nodes before and after the delay change to ensure that, indeed, the forwarding tables and packet route did change.
+ctiTest - This test specifically tests a case brought up in class, the count to infinity problem, and if we properly use poison reverse to avoid that issue. We used this test to edit aspects of our DV protocol, and test the correctness of our LS protocol. We start with three interconnected nodes, and allow them to develop their forwarding tables, with one specific route heavily favored. We then change the delay of the favored path, making it no longer the prefered route for any node, to test our DV packet updating abilities and our poison reverse. The routers find this update, and adjust the forwarding tables accordingly. We send a data packet between nodes before and after the delay change to ensure that, indeed, the forwarding tables and packet route did change.
 
 homeworkTest - 
 
