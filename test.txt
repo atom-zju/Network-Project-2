@@ -7,8 +7,8 @@ scenarios that we developed. Different configuration files test different aspect
 including corner cases and our ability to perform require tasks in multiple scenarios. We also used
 the provided simple test cases to test simple packet transmission and routing calculation.
 
-Test Descriptions:
-==================
+System Test Descriptions:
+=========================
 
 15NodesComplex.test - This scenario, first, tests our systems ability to handle larger amounts 
 of nodes, in this case 15, that are largely interconnected with a complex topology with many 
@@ -59,3 +59,16 @@ the now disconnected node; we show this by attempting to send a packet from the 
 and see that the packets will be lost due to having no known path to the router, as expected. The outputs for the
 DV and LS tests are in 4NodesHomework.test_DV.out and 4NodesHomework.test_LS.out, respectively. 
 
+Component Testing:
+==================
+
+In order to test, and display, the proper implementation of the two most important parts of the individual router
+components, namely the forwarding table and port table, we added a special print function that would allow us
+to print the entire contents of either table during execution in order to visually confirm its correctness, as
+well as debug any issues that we are facing. We were able to use this functionality in conjunction with GDB in
+order to test the contents of both tables during all of our testing scenarios, testing the robustness 
+of our table updating and computation, and were able to confirm that both tables are, in fact, being updated 
+properly in response to changes in network topology. In this way, we can visually confirm the correctness of our
+link state calculations implementing Dijkstra’s algorithm, as well as the correctness of our distance vector 
+calculations based on the Bellman-Ford algorithm, by displaying the table contents every time a table is changed
+in order to confirm the correctness of the update and the subsequent tables.
