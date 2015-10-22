@@ -1,18 +1,49 @@
-Test case configuration files are included in the mytest directory.
+Test case configuration files and corresponding simulator outputs, differentiated by DV and LS, are 
+included in the mytest directory.
 
-We developed configurations to test our routing protocols, both at the component and system levels.
+We developed configurations to test our routing protocols, both at the component and system levels. 
+We also added a shell script (test.sh) to automate the testing process for the numerous testing 
+scenarios that we developed. Different configuration files test different aspects of our implementation, 
+including corner cases and our ability to perform require tasks in multiple scenarios. We also used
+the provided simple test cases to test simple packet transmission and routing calculation.
 
-Different configuration files test different aspects of our implementation, including corner cases and our ability to perform require tasks in multiple scenarios:
+Test Descriptions:
+==================
 
-mytest1, 6NodesComplex.test - mytest1 tests, first, establishing the correct forwarding tables for both routing protocols given a complex graph topology with many different delay values. Once those routes are established correctly, multiple essential links in the graph are brought down to test our ability to reconfigure our forwarding tables based on these changes, and forward data packets accordingly. As a consequence, our ability to send, receive, and properly update DV and LS packets are tested here as well.  
+15NodesComplex.test - This scenario, first, tests our systems ability to handle larger amounts 
+of nodes, in this case 15, that are largely interconnected with a complex topology with many 
+different delay values. Many data packets are sent between nodes in order to ensure that the 
+forwarding tables for all nodes have been correctly established for both DV and LS. The large 
+number of nodes in conjunction with the complex topology tests our ability to route packets across
+complex routes. The topology is then changed in our test by changing the delays of key links, and 
+then with certain links failing, in order to test our system’s robustness in adapting to new routing
+paths. The outputs for the DV and LS tests are in 15NodesComplex.test_DV.out and 15NodesComplex.test_LS.out,
+respectively.
 
-mytest2 - 
+3NodesLinkDead.test - This scenario tests our system’s ability to adapt to link failures, and reconnections,
+between nodes. In this test, our three nodes are connected by two links. Protocol packets (DV or LS depending
+on the test protocol) and ping/pong messages are seen to be properly exchanged between the nodes prior to
+link failure. Once the failure occurs, those interactions between the connected nodes continues as it should,
+while the packets are lost trying to communicate with the disconnected node, as they should. Once the node
+is reconnected later in the test, proper communication between all three nodes is restored. This shows 
+our robustness in regards to link failures and reconnections. The outputs for the DV and LS tests are in
+3NodesLinkDead.test_DV.out and 3NodesLinkDead.test_LS.out, respectively.
 
-mytest3 - 
+3NodesPoisonReverse.test - This test specifically tests a case brought up in class, the count to 
+infinity problem, and if we properly use poison reverse to avoid that issue. We used this test to 
+edit aspects of our DV protocol, and test the correctness of our LS protocol. We start with three 
+interconnected nodes, and allow them to develop their forwarding tables, with one specific route heavily 
+favored. We then change the delay of the favored path, making it no longer the preferred route for any 
+node, to test our DV packet updating abilities and our poison reverse. The routers find this update, 
+and adjust the forwarding tables accordingly. We send a data packet between nodes before and after 
+the delay change to ensure that, indeed, the forwarding tables and packet route did change. The outputs
+for the DV and LS tests are in 3NodesPoisonReverse.test_DV.out and 3NodesPoisonReverse.test_LS.out, 
+respectively. 
 
-ctiTest - This test specifically tests a case brought up in class, the count to infinity problem, and if we properly use poison reverse to avoid that issue. We used this test to edit aspects of our DV protocol, and test the correctness of our LS protocol. We start with three interconnected nodes, and allow them to develop their forwarding tables, with one specific route heavily favored. We then change the delay of the favored path, making it no longer the prefered route for any node, to test our DV packet updating abilities and our poison reverse. The routers find this update, and adjust the forwarding tables accordingly. We send a data packet between nodes before and after the delay change to ensure that, indeed, the forwarding tables and packet route did change.
+4NodesDelayUpAndDown.test - 
 
-homeworkTest - 
+4NodesHomework.test - This test specifically addresses a case brought up in the homework, namely, the possibility 
+of forming routing loops after the failure of a link. 
 
 At the component level:
 
