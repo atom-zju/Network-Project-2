@@ -24,13 +24,15 @@ put immediately. Then we also hard-coded packets with designated content and use
 protocol behaved well after we implemented the port table.
 
 3. port table: In port table, it needs to keep tracking and recording all neighbors’ ID, corresponding ports, 
-delays, and timestamps. To ensure the algorithm and data structure act flawlessly, we implemented a method to print 
-out the entire table and we run several test cases in gdb, printing whole table step by step. 
+delays, and timestamps. To ensure the algorithm and data structure act flawlessly, we implemented a method called 
+print() to print out the entire table and we run several test cases in gdb, printing whole table step by step. 
 
-4. forwarding table: Same as port table. We also implemented a method to print out whole table. What’s more, for DV 
-protocol, we developed 2 more test cases, 4NodesHomework.test, and 3NodesPoisonReverse.test, to test if the poison 
-reverse was performing right. For LS protocol, we also run and analyzed all test cases to examine its correctness. 
-Details about these cases will be shown below.
+4. forwarding table: Same as port table. We also implemented a method called print() to print out whole table during 
+execution to check its correctness. What’s more, for DV protocol, we developed 2 more test cases, 4NodesHomework.test, 
+and 3NodesPoisonReverse.test, to test if the poison reverse was performing right. For LS protocol, we also run and 
+analyzed all test cases to examine its correctness. Details about these cases will be shown below. Besides that, the 
+correctness of Dijkstra algorithm can be properly reflected when we Simulator run in LS mode, since we store the result 
+of the algorithm into forwarding table and it can be print out in gdb any time during execution.
 
 System test: after implemented all features of the system, we tested them as a whole system. We first executed 
 three simpletest cases given by instructor, comparing results with the given outputs. After eliminating several 
