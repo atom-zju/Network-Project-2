@@ -22,10 +22,9 @@ Files Descriptions:
 	fwdtable.cc	forwarding table class supporting both DV and LS protocols
 	fwdtable.h	header file for forward table class
 	global.h	global constant definitions, given by instructor
-	mytest		folder contains all test cases, see test.txt for more information
+	mytest/		folder contains all test cases, see test.txt inside for more information
 	porttable.cc	port table class that records all neighbor nodes, the ports to them and the delays to them
 	porttable.h	header file for forward table class
-	test.txt	describes details about test strategy and test cases
 
 Implementation Summary:
 ====================
